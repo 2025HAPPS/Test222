@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>순발력 테스트 게임</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      background-color: #f9fafb;
+      margin: 0;
+      padding: 0;
+      transition: background-color 0.3s ease;
+    }
+    .hidden {
+      display: none;
+    }
+    .screen {
+      padding: 50px 20px;
+    }
+    input[type="text"] {
+      padding: 10px 16px;
+      font-size: 18px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      width: 250px;
+    }
+    button {
+      margin: 10px;
+      padding: 12px 24px;
+      font-size: 18px;
+      background-color: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    button:hover {
+      background-color: #4338ca;
+    }
+    .pad-button {
+      margin: 10px;
+      padding: 30px 40px;
+      font-size: 28px;
+      background-color: #e0e7ff;
+      color: #1e3a8a;
+      border: none;
+      border-radius: 12px;
+      transition: transform 0.1s ease;
+    }
+    .pad-button:hover {
+      transform: scale(1.05);
+    }
+    .green-flash {
+      background-color: rgba(34, 197, 94, 0.2) !important;
+    }
+    .red-flash {
+      background-color: rgba(239, 68, 68, 0.2) !important;
+    }
+    #target {
+      font-size: 26px;
+      margin: 30px 0;
+      color: #111827;
+    }
+    #score, #timer {
+      font-size: 22px;
+      margin: 10px;
+      color: #1f2937;
+    }
+    table {
+      margin: 0 auto;
+      border-collapse: collapse;
+      background-color: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 12px 20px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 18px;
+    }
+    th {
+      background-color: #6366f1;
+      color: white;
+    }
+    td {
+      background-color: #f3f4f6;
+    }
+  </style>
+</head>
+<body>
+  <div id="startScreen" class="screen">
+    <h1>⚡ 순발력 테스트 게임 ⚡</h1>
+    <input type="text" id="playerName" placeholder="이름 입력" />
+    <br><br>
+    <button onclick="startGame()">시작하기</button>
+    <button onclick="showLeaderboard()">🏆 랭킹 보기</button>
+  </div>
+
+  <div id="gameScreen" class="screen hidden">
+    <h2 id="timer">60</h2>
+    <h1 id="target">어떤 버튼을 누르세요!</h1>
+    <div>
+      <button class="pad-button" onclick="handleInput('Q')">Q</button>
+      <button class="pad-button" onclick="handleInput('W')">W</button>
+      <button class="pad-button" onclick="handleInput('E')">E</button>
+      <button class="pad-button" onclick="handleInput('R')">R</button>
+    </div>
+    <h3 id="score">점수: 0</h3>
+  </div>
+
+  <div id="endScreen" class="screen hidden">
+    <h2 id="finalScore"></h2>
+    <button onclick="startGame()">🔁 다시 하기</button>
+    <button onclick="showLeaderboard()">🏆 랭킹 보기</button>
+  </div>
+
+  <div id="leaderboardScreen" class="screen hidden">
+    <h2>🏆 순위</h2>
+    <table>
+      <thead>
+        <tr><th>이름</th><th>점수</th></tr>
+      </thead>
+      <tbody id="leaderboardBody"></tbody>
+    </table>
+    <br>
+    <button onclick="goToStart()">⬅ 처음으로</button>
+  </div>
+
+  <script>
+    const pads = ['Q', 'W', 'E', 'R'];
+    let currentTarget = '';
+    let score = 0;
+    let timer = 60;
+    let timerInterval;
+    let playerName = '';
+
+    const timerEl = document.getElementById('timer');
+    const targetEl = document.getElementById('target');
+    const scoreEl = document.getElementById('score');
+    const finalScoreEl = document.getElementById('finalScore');
+
+    function startGame() {
+      const nameInput = document.getElementById('playerName');
+      playerName = nameInput.value.trim();
+      if (!playerName) {
+        alert("이름을 입력해주세요.");
+        return;
+      }
+      score = 0;
+      timer = 60;
+      updateScore();
+      updateTimer();
+
+      document.getElementById('startScreen').classList.add('hidden');
+      document.getElementById('endScreen').classList.add('hidden');
+      document.getElementById('leaderboardScreen').classList.add('hidden');
+      document.getElementById('gameScreen').classList.remove('hidden');
+
+      nextRound();
+
+      timerInterval = setInterval(() => {
+        timer--;
+        updateTimer();
+        if (timer <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function updateTimer() {
+      timerEl.textContent = timer;
+    }
+
+    function updateScore() {
+      scoreEl.textContent = `점수: ${score}`;
+    }
+
+    function nextRound() {
+      currentTarget = pads[Math.floor(Math.random() * pads.length)];
+      targetEl.textContent = `${currentTarget}`;
+    }
+
+    function handleInput(input) {
+      const body = document.body;
+      if (input === currentTarget) {
+        score += 10;
+        flashColor('green');
+      } else {
+        score -= 5;
+        flashColor('red');
+      }
+      updateScore();
+      nextRound();
+    }
+
+    function flashColor(color) {
+      const body = document.body;
+      if (color === 'green') {
+        body.classList.add('green-flash');
+      } else if (color === 'red') {
+        body.classList.add('red-flash');
+      }
+      setTimeout(() => {
+        body.classList.remove('green-flash');
+        body.classList.remove('red-flash');
+      }, 200);
+    }
+
+    function endGame() {
+      clearInterval(timerInterval);
+      document.getElementById('gameScreen').classList.add('hidden');
+      document.getElementById('endScreen').classList.remove('hidden');
+      finalScoreEl.textContent = `최종 점수: ${score}`;
+      if (playerName) saveScore(playerName, score);
+    }
+
+    function saveScore(name, score) {
+  try {
+    let data = JSON.parse(localStorage.getItem('reactionGameScores')) || [];
+    data.push({ name, score });
+    data.sort((a, b) => b.score - a.score);
+    if (data.length > 10) data = data.slice(0, 10);
+    localStorage.setItem('reactionGameScores', JSON.stringify(data));
+    console.log('점수 저장 완료:', data);
+  } catch (e) {
+    console.error('점수 저장 실패:', e);
+  }
+}
+
+    function showLeaderboard() {
+      const data = JSON.parse(localStorage.getItem('reactionGameScores') || '[]');
+      const tbody = document.getElementById('leaderboardBody');
+      tbody.innerHTML = '';
+      data.forEach(entry => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${entry.name}</td><td>${entry.score}</td>`;
+        tbody.appendChild(row);
+      });
+      document.getElementById('startScreen').classList.add('hidden');
+      document.getElementById('gameScreen').classList.add('hidden');
+      document.getElementById('endScreen').classList.add('hidden');
+      document.getElementById('leaderboardScreen').classList.remove('hidden');
+    }
+
+    function goToStart() {
+      document.getElementById('startScreen').classList.remove('hidden');
+      document.getElementById('leaderboardScreen').classList.add('hidden');
+    }
+
+    window.addEventListener('keydown', e => {
+      if (document.activeElement.tagName === 'INPUT') return;
+      const key = e.key.toUpperCase();
+      if (pads.includes(key)) {
+        handleInput(key);
+      }
+    });
+  </script>
+</body>
+</html>
